@@ -1,59 +1,63 @@
 import express from "express";
+import { MongoClient, ReturnDocument, ServerApiVersion } from "mongodb";
 
-const articleInfo = [
-  {
-    articleName: "learn-node",
-    upvotes: 0,
-    comments: [],
-  },
-  {
-    articleName: "learn-react",
-    upvotes: 0,
-    comments: [],
-  },
-  {
-    articleName: "learn-mongodb",
-    upvotes: 0,
-    comments: [],
-  },
-];
+let db;
+const connectToDb = async () => {
+  const uri = "mongodb://127.0.0.1:27017";
+  const client = new MongoClient(uri, {
+    serverApi: {
+      version: ServerApiVersion.v1,
+      strict: true,
+      deprecationErrors: true,
+    },
+  });
+
+  await client.connect();
+  db = client.db("full-stack-react-db");
+};
+
 const app = express();
 app.use(express.json());
 
-app.post("/api/articles/:name/upvote", (req, res) => {
-  const articleName = req.params.name;
-  const article = articleInfo.find((a) => a.articleName === articleName);
+app.get("/api/articles/:name", async (req, res) => {
+  const { name } = req.params;
+  const article = await db
+    .collection("articles")
+    .findOne({ articleName: name });
+  res.json(article);
+});
 
-  article.upvotes += 1;
+app.post("/api/articles/:name/upvote", async (req, res) => {
+  const { name } = req.params;
+  const article = await db
+    .collection("articles")
+    .findOneAndUpdate(
+      { articleName: name },
+      { $inc: { upvote: 1 } },
+      { ReturnDocument: "after" },
+    );
+  res.json(article);
+});
+
+app.post("/api/articles/:name/comment", async (req, res) => {
+  const { name: articleName } = req.params;
+  const { postedBy, text: comment } = req.body;
+  const article = await db
+    .collection("articles")
+    .findOneAndUpdate(
+      { articleName },
+      { $push: { comments: comment }, $set: { postedBy } },
+      { ReturnDocument: "after" },
+    );
 
   res.json(article);
 });
 
-app.post("/api/articles/:name/comment", (req, res) => {
-  const { name: articleName } = req.params;
-  const { postedBy, text: comment } = req.body;
-  const article = articleInfo.find((a) => a.articleName === articleName);
-
-  article.comments.push(comment);
-
-  res.json({
-    message: `Success! The article ${articleName} has now ${article.comments.length} comments posted by ${postedBy} "${comment}"`,
-    article,
+const start = async () => {
+  await connectToDb();
+  app.listen(8000, () => {
+    console.log("Server is running on port 8000");
   });
-});
+};
 
-// app.get("/hello", (req, res) => {
-//   res.send("GET: Hello!");
-// });
-
-// app.get("/hello/:name", (req, res) => {
-//   res.send(`GET: Hello ${req.params.name}!`);
-// });
-
-// app.post("/hello", (req, res) => {
-//   res.send(`POST: Hello ${req.body.name}!`);
-// });
-
-app.listen(8000, () => {
-  console.log("Server is running on port 8000");
-});
+start();
