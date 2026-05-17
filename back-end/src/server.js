@@ -21,10 +21,13 @@ app.use(express.json());
 
 app.get("/api/articles/:name", async (req, res) => {
   const { name } = req.params;
-  const article = await db
-    .collection("articles")
-    .findOne({ articleName: name });
+  const article = await db.collection("articles").findOne({ name });
   res.json(article);
+});
+
+app.get("/api/articles", async (req, res) => {
+  const articles = await db.collection("articles").find({}).toArray();
+  res.json(articles);
 });
 
 app.post("/api/articles/:name/upvote", async (req, res) => {
@@ -32,22 +35,22 @@ app.post("/api/articles/:name/upvote", async (req, res) => {
   const article = await db
     .collection("articles")
     .findOneAndUpdate(
-      { articleName: name },
-      { $inc: { upvote: 1 } },
-      { ReturnDocument: "after" },
+      { name },
+      { $inc: { upvotes: 1 } },
+      { returnDocument: "after" },
     );
   res.json(article);
 });
 
 app.post("/api/articles/:name/comment", async (req, res) => {
-  const { name: articleName } = req.params;
-  const { postedBy, text: comment } = req.body;
+  const { name } = req.params;
+  const { postedBy, text } = req.body;
   const article = await db
     .collection("articles")
     .findOneAndUpdate(
-      { articleName },
-      { $push: { comments: comment }, $set: { postedBy } },
-      { ReturnDocument: "after" },
+      { name },
+      { $push: { comments: { text, postedBy } }, $set: {} },
+      { returnDocument: "after" },
     );
 
   res.json(article);

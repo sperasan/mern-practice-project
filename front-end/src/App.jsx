@@ -1,9 +1,11 @@
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import "./App.css";
 import HomePage from "./pages/HomePage";
-import ArticlesListPage from "./pages/ArticlesListPage";
+import ArticlesListPage, {
+  loader as articlesLoader,
+} from "./pages/ArticlesListPage";
 import AboutPage from "./pages/AboutPage";
-import ArticlePage from "./pages/ArticlePage";
+import ArticlePage, { loader as articleLoader } from "./pages/ArticlePage";
 import Layout from "./components/Layout";
 import NotFoundPage from "./pages/NotFoundPage";
 
@@ -24,10 +26,12 @@ const routes = [
       {
         path: "/articles",
         element: <ArticlesListPage />,
+        loader: articlesLoader,
       },
       {
         path: "/articles/:name",
         element: <ArticlePage />,
+        loader: articleLoader,
       },
     ],
   },
