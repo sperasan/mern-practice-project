@@ -13,6 +13,7 @@
   "type": "module",
   "dependencies": {
     "express": "^5.2.1",
+    "firebase-admin": "^13.10.0",
     "mongodb": "^7.2.0"
   },
   "devDependencies": {
